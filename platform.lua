@@ -2,25 +2,18 @@
 local M = {}
 
 function M.createPlatforms()
-    local platforms = {}
-    local startY = 200
-
-    for i = 1, 9 do
-        local width = 100 + (i % 3) * 50
-        local x = math.random(100 + width / 2, 900 - width / 2)
-
-        table.insert(platforms, {
-            x = x,
-            y = startY + (i - 1) * 60,
-            width = width,
-            height = 20,
-            angle = 0,
-            canTilt = false,
-            index = i
-        })
-    end
-
-    return platforms
+    -- Hardcoded positions and widths
+    return {
+        {x = 200, y = 200, width = 150, height = 20, angle = 0, canTilt = false, index = 1},
+        {x = 600, y = 260, width = 200, height = 20, angle = 0, canTilt = false, index = 2},
+        {x = 400, y = 320, width = 120, height = 20, angle = 0, canTilt = false, index = 3},
+        {x = 700, y = 380, width = 180, height = 20, angle = 0, canTilt = false, index = 4},
+        {x = 300, y = 440, width = 170, height = 20, angle = 0, canTilt = false, index = 5},
+        {x = 550, y = 500, width = 150, height = 20, angle = 0, canTilt = false, index = 6},
+        {x = 350, y = 560, width = 190, height = 20, angle = 0, canTilt = false, index = 7},
+        {x = 650, y = 620, width = 140, height = 20, angle = 0, canTilt = false, index = 8},
+        {x = 500, y = 680, width = 200, height = 20, angle = 0, canTilt = false, index = 9}
+    }
 end
 
 return M
