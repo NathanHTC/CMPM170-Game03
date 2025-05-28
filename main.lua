@@ -13,7 +13,8 @@ function love.load()
     -- Happiness bar settings
     maxHappiness = 100
     currentHappiness = maxHappiness
-    happinessDecreasePerScore = 10 -- How much happiness decreases per point scored
+    happinessDecreasePerScore = 5 -- How much happiness decreases per point scored
+    happinessIncreasePerMistake = 5 -- How much happiness increases when player makes mistake
     
     -- Happiness bar visual settings
     happinessBar = {
@@ -116,7 +117,11 @@ function love.update(dt)
                     currentHappiness = math.max(0, currentHappiness - happinessDecreasePerScore)
                 else
                     print("Log: Wrong bin")
+                    -- Decrease score and increase happiness when player makes mistake
+                    score = math.max(0, score - 1) -- Prevent negative scores
+                    currentHappiness = math.min(maxHappiness, currentHappiness + happinessIncreasePerMistake)
                 end
+                break -- Exit loop once we've found the bin the part landed in
             end
         end
 
