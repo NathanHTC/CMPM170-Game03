@@ -1,3 +1,7 @@
+local Platform = require("platform")
+local Part = require("part")
+local Bin = require("bin")
+
 -- main.lua
 function love.load()
     love.window.setTitle("Factory Part Sorting Game")
@@ -6,50 +10,11 @@ function love.load()
     partLanded = false
     currentPlatformIndex = 1
 
-    -- Platform
-    platforms = {}
+    platforms = Platform.createPlatforms()
+    partTypes = Bin.types
+    bins = Bin.bins
 
-    local startY = 200
-    for i = 1, 9 do
-        local width = 100 + (i % 3) * 50
-        local x = math.random(100 + width / 2, 900 - width / 2)
-
-        table.insert(platforms, {
-            x = x,
-            y = startY + (i - 1) * 60,
-            width = width,
-            height = 20,
-            angle = 0,
-            canTilt = false,
-            index = i
-        })
-    end
-
-    partTypes = {
-        {type = "red", color = {1, 0, 0}, binX = 200},
-        {type = "green", color = {0, 1, 0}, binX = 350},
-        {type = "blue", color = {0, 0, 1}, binX = 500}
-    }
-
-    -- Choose a random type
-    local randomType = partTypes[math.random(#partTypes)]
-
-    part = {
-        x = 400,
-        y = 0,
-        size = 20,
-        vx = 0,
-        vy = 100,
-        onPlatform = false,
-        type = randomType.type,
-        color = randomType.color
-    }
-    -- Bins
-    bins = {
-        {x = 150, width = 150, color = {1, 0, 0}}, -- Red
-        {x = 425, width = 150, color = {0, 1, 0}}, -- Green
-        {x = 700, width = 150, color = {0, 0, 1}} -- Blue
-    }
+    part, currentPlatformIndex = Part.spawnNew(partTypes, platforms)
     groundY = 850
 end
 
