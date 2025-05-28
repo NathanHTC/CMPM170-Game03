@@ -9,6 +9,20 @@ function love.load()
     score = 0
     partLanded = false
     currentPlatformIndex = 1
+    
+    -- Happiness bar settings
+    maxHappiness = 100
+    currentHappiness = maxHappiness
+    happinessDecreasePerScore = 10 -- How much happiness decreases per point scored
+    
+    -- Happiness bar visual settings
+    happinessBar = {
+        x = 920,          -- X position (right side of screen)
+        y = 50,           -- Y position from top
+        width = 30,       -- Width of the bar
+        height = 400,     -- Height of the bar
+        borderWidth = 2   -- Border thickness
+    }
 
     platforms = Platform.createPlatforms()
     partTypes = Bin.types
@@ -21,6 +35,25 @@ function love.load()
 
     part, currentPlatformIndex = Part.spawnNew(partTypes, platforms)
     groundY = 850
+end
+
+-- Function to calculate happiness bar color based on current happiness level
+function getHappinessColor(happiness, maxHappiness)
+    local ratio = happiness / maxHappiness
+    
+    if ratio > 0.5 then
+        -- Green to Yellow (happiness 100% to 50%)
+        -- At 100%: pure green (0, 1, 0)
+        -- At 50%: yellow (1, 1, 0)
+        local t = (1.0 - ratio) * 2 -- Scale 1.0-0.5 to 0-1
+        return {t, 1, 0} -- Red increases, Green stays 1, Blue stays 0
+    else
+        -- Yellow to Red (happiness 50% to 0%)
+        -- At 50%: yellow (1, 1, 0)
+        -- At 0%: red (1, 0, 0)
+        local t = ratio * 2 -- Scale 0-0.5 to 0-1
+        return {1, t, 0} -- Red stays 1, Green decreases, Blue stays 0
+    end
 end
 
 function love.update(dt)
@@ -79,6 +112,8 @@ function love.update(dt)
                     part.color[2] and bin.color[3] == part.color[3] then
                     print("log: Correct bin")
                     score = score + 1
+                    -- Decrease happiness when score increases
+                    currentHappiness = math.max(0, currentHappiness - happinessDecreasePerScore)
                 else
                     print("Log: Wrong bin")
                 end
@@ -127,8 +162,32 @@ function love.draw()
         love.graphics.rectangle("fill", bin.x, groundY, bin.width, 30)
     end
 
+    -- Draw happiness bar
+    local bar = happinessBar
+    
+    -- Draw border (black outline)
+    love.graphics.setColor(0, 0, 0)
+    love.graphics.rectangle("fill", bar.x - bar.borderWidth, bar.y - bar.borderWidth, 
+                            bar.width + bar.borderWidth * 2, bar.height + bar.borderWidth * 2)
+    
+    -- Draw background (dark gray)
+    love.graphics.setColor(0.2, 0.2, 0.2)
+    love.graphics.rectangle("fill", bar.x, bar.y, bar.width, bar.height)
+    
+    -- Draw happiness level
+    local happinessRatio = currentHappiness / maxHappiness
+    local fillHeight = bar.height * happinessRatio
+    local fillY = bar.y + bar.height - fillHeight -- Start from bottom
+    
+    -- Set color based on happiness level
+    local happinessColor = getHappinessColor(currentHappiness, maxHappiness)
+    love.graphics.setColor(happinessColor)
+    love.graphics.rectangle("fill", bar.x, fillY, bar.width, fillHeight)
+    
+    -- Draw happiness text
     love.graphics.setColor(1, 1, 1)
-    love.graphics.print("Score: " .. score, 10, 10)
+    love.graphics.print("Happiness", bar.x - 20, bar.y - 30)
+    love.graphics.print(math.floor(currentHappiness) .. "%", bar.x - 10, bar.y + bar.height + 10)
 
     -- Draw air vents
     for _, vent in ipairs(airVents) do
@@ -137,9 +196,12 @@ function love.draw()
                                 vent.y - vent.height / 2, vent.width,
                                 vent.height)
     end
+    
+    -- Draw score (moved this to the end to ensure it's visible)
+    love.graphics.setColor(1, 1, 1)
+    love.graphics.print("Score: " .. score, 10, 10)
 end
 
 function spawnNewPart()
     part, currentPlatformIndex = Part.spawnNew(partTypes, platforms)
 end
-
