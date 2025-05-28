@@ -12,7 +12,7 @@ function M.createPlatforms()
         {x = 550, y = 500, width = 150, height = 20, angle = 0, canTilt = false, index = 6},
         {x = 350, y = 560, width = 190, height = 20, angle = 0, canTilt = false, index = 7},
         {x = 650, y = 620, width = 140, height = 20, angle = 0, canTilt = false, index = 8},
-        {x = 500, y = 680, width = 200, height = 20, angle = 0, canTilt = false, index = 9}
+        {x = 600, y = 680, width = 100, height = 20, angle = 0, canTilt = false, index = 9}
     }
 end
 

@@ -14,6 +14,11 @@ function love.load()
     partTypes = Bin.types
     bins = Bin.bins
 
+    airVents = {
+        {x = 250, y = 560, width = 30, height = 20, power = -800},
+        {x = 660, y = 680, width = 30, height = 20, power = -800}
+    }
+
     part, currentPlatformIndex = Part.spawnNew(partTypes, platforms)
     groundY = 850
 end
@@ -39,7 +44,9 @@ function love.update(dt)
 
     -- If not on any platform, resume falling
     if not part.onPlatform then
-        part.vy = 100
+        if part.vy >= 0 then -- Only reset if not already boosted upward
+            part.vy = 100
+        end
         part.y = part.y + part.vy * dt
     end
 
@@ -85,6 +92,16 @@ function love.update(dt)
         spawnNewPart()
         partLanded = false
     end
+
+    for _, vent in ipairs(airVents) do
+        local touchingVent =
+            part.y + part.size / 2 >= vent.y - vent.height / 2 and part.y -
+                part.size / 2 <= vent.y + vent.height / 2 and part.x + part.size /
+                2 >= vent.x - vent.width / 2 and part.x - part.size / 2 <=
+                vent.x + vent.width / 2
+
+        if touchingVent then part.vy = vent.power end
+    end
 end
 
 function love.draw()
@@ -112,26 +129,17 @@ function love.draw()
 
     love.graphics.setColor(1, 1, 1)
     love.graphics.print("Score: " .. score, 10, 10)
+
+    -- Draw air vents
+    for _, vent in ipairs(airVents) do
+        love.graphics.setColor(0.5, 0.8, 1) -- light blue
+        love.graphics.rectangle("fill", vent.x - vent.width / 2,
+                                vent.y - vent.height / 2, vent.width,
+                                vent.height)
+    end
 end
 
 function spawnNewPart()
-    local randomType = partTypes[math.random(#partTypes)]
-
-    currentPlatformIndex = 1
-    local platform = platforms[currentPlatformIndex]
-
-    part = {
-        x = platform.x,
-        y = platform.y - 100,
-        size = 20,
-        vx = 0,
-        vy = 100,
-        onPlatform = false,
-        type = randomType.type,
-        color = randomType.color
-    }
-
-    platform.canTilt = false
-    platform.angle = 0
+    part, currentPlatformIndex = Part.spawnNew(partTypes, platforms)
 end
 
