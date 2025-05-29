@@ -15,7 +15,7 @@ function M.spawnNew(partTypes, platforms)
         y = platforms[1].y - 100,
         size = 20,
         vx = 0,
-        vy = 100,
+        vy = 200,
         onPlatform = false,
         type = randomType.type,
         color = randomType.color
