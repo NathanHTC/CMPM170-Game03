@@ -1,16 +1,20 @@
 -- bin.lua
+
+
+
+
 local M = {}
 
-M.bins = {
-    {x = 150, width = 150, color = {1, 0, 0}}, -- Red
-    {x = 425, width = 150, color = {0, 1, 0}}, -- Green
-    {x = 700, width = 150, color = {0, 0, 1}}  -- Blue
+M.types = {
+    { type = "part1", color = {1, 0, 0}, imageIndex = 1 },
+    { type = "part2", color = {0, 1, 0}, imageIndex = 2 },
+    { type = "part3", color = {0, 0, 1}, imageIndex = 3 },
 }
 
-M.types = {
-    {type = "red", color = {1, 0, 0}, binX = 200},
-    {type = "green", color = {0, 1, 0}, binX = 350},
-    {type = "blue", color = {0, 0, 1}, binX = 500}
+M.bins = {
+    { type = "part1", x = 100, y = 950, width = 250, color = {1, 0, 0}, image = "assets/trashbin1.png" },
+    { type = "part2", x = 375, y = 955, width = 250, color = {0, 1, 0}, image = "assets/trashbin2.png" },
+    { type = "part3", x = 650, y = 960, width = 250, color = {0, 0, 1}, image = "assets/trashbin3.png" }
 }
 
 return M

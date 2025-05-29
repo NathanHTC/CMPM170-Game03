@@ -45,6 +45,14 @@ function love.load()
         hurt = love.graphics.newImage("assets/robothurt.png")
     }
 
+    scrapImages = {
+        love.graphics.newImage("assets/scrap_part1.png"),
+        love.graphics.newImage("assets/scrap_part2.png"),
+        love.graphics.newImage("assets/scrap_part3.png")
+    }
+
+
+
     -- Happiness settings
     maxHappiness = 100
     currentHappiness = maxHappiness
@@ -66,6 +74,14 @@ function love.load()
     -- Initialize empty parts table for start screen
     parts = {}
     groundY = 850
+
+    -- Load bin images
+    for _, bin in ipairs(bins) do
+        if bin.image then
+            bin.imageAsset = love.graphics.newImage(bin.image)
+        end
+    end
+
 end
 
 function initializeGame()
@@ -364,16 +380,51 @@ function drawGameScreen()
     end
 
     -- Parts
-    for _, part in ipairs(parts) do
-        love.graphics.setColor(part.color)
-        love.graphics.rectangle("fill", part.x - part.size / 2, part.y - part.size / 2, part.size, part.size)
+   for _, part in ipairs(parts) do
+        if part.imageIndex and scrapImages[part.imageIndex] then
+            local img = scrapImages[part.imageIndex]
+            local scale = part.size / img:getWidth()
+            love.graphics.setColor(1, 1, 1)
+            love.graphics.draw(img, part.x - (img:getWidth() * scale) / 2, part.y - (img:getHeight() * scale) / 2, 0, scale, scale)
+        else
+            love.graphics.setColor(part.color)
+            love.graphics.rectangle("fill", part.x - part.size / 2, part.y - part.size / 2, part.size, part.size)
+        end
     end
 
     -- Bins
     for _, bin in ipairs(bins) do
-        love.graphics.setColor(bin.color)
-        love.graphics.rectangle("fill", bin.x, groundY, bin.width, 30)
+        if bin.imageAsset then
+            love.graphics.setColor(1, 1, 1)
+
+            -- Scale the bin to match width
+            local scale = bin.width / bin.imageAsset:getWidth()
+
+            -- Offset logic for specific images
+            local yOffset = 30  -- lowers all bins uniformly
+            if bin.image:find("trashbin3.png") then
+                scale = scale * 0.85  -- skull bin a bit large, scale it down
+                yOffset = 45          -- adjust further down if needed
+            elseif bin.image:find("trashbin2.png") then
+                scale = scale * 1.05  -- bolt bin slightly small, scale it up
+                yOffset = 30
+            end
+
+        -- Calculate placement
+        local binHeight = bin.imageAsset:getHeight() * scale
+        local drawX = bin.x
+        local drawY = bin.y + yOffset - binHeight
+
+        love.graphics.draw(bin.imageAsset, drawX, drawY, 0, scale, scale)
+        
+        else
+            -- fallback: colored box
+            love.graphics.setColor(bin.color)
+            love.graphics.rectangle("fill", bin.x, bin.y, bin.width, 30)
+        end
     end
+
+
 
     -- Happiness Bar
     local bar = happinessBar

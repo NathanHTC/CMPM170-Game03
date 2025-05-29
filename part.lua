@@ -12,13 +12,15 @@ function M.spawnNew(partTypes, platforms)
     local part = {
         x = spawnX,
         y = platform.y - 100,
-        size = 20,
+        size = 40,
         vx = 0,
         vy = 200,
         onPlatform = false,
         landed = false,
         type = randomType.type,
-        color = randomType.color
+        color = randomType.color,
+        imageIndex = randomType.imageIndex
+
     }
 
     return part
