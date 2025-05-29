@@ -168,6 +168,10 @@ function love.update(dt)
         conveyorDirection = -1 -- Move left
     elseif love.keyboard.isDown("d") then
         conveyorDirection = 1  -- Move right
+    elseif love.keyboard.isDown("left") then
+        conveyorDirection = -1  -- Move right
+    elseif love.keyboard.isDown("right") then
+        conveyorDirection = 1  -- Move right
     else
         conveyorDirection = 0  -- Stop
     end
