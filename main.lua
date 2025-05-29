@@ -42,7 +42,7 @@ function love.load()
     
     -- Happiness bar visual settings
     happinessBar = {
-        x = 920,          -- X position (right side of screen)
+        x = 880,          -- X position (adjusted to center with robot)
         y = 180,           -- Y position from top
         width = 30,       -- Width of the bar
         height = 400,     -- Height of the bar
@@ -157,13 +157,13 @@ function love.update(dt)
 
     -- If not on any platform, resume falling
     if not part.onPlatform then
-        if part.vy >= 0 then
-            part.vy = 200
+        if part.vy >= 0 then -- Only reset if not already boosted upward
+            part.vy = 300 -- Increased from 100 to make parts fall faster
         end
         part.y = part.y + part.vy * dt
     end
 
-    -- Conveyor belt control
+    -- Conveyor belt control (replaces tilting)
     if love.keyboard.isDown("a") then
         conveyorDirection = -1 -- Move left
     elseif love.keyboard.isDown("d") then
@@ -226,6 +226,7 @@ function love.update(dt)
                     currentHappiness = math.max(0, currentHappiness - happinessDecreasePerScore)
                 else
                     print("Log: Wrong bin")
+                    -- FIXED: Don't trigger hurt animation for wrong bin - robot should be happier
                     -- Decrease score and increase happiness when player makes mistake
                     score = math.max(0, score - 1) -- Prevent negative scores
                     currentHappiness = math.min(maxHappiness, currentHappiness + happinessIncreasePerMistake)
@@ -315,7 +316,7 @@ function love.draw()
             local imgWidth = faceImage:getWidth()
             local imgHeight = faceImage:getHeight()
         
-            local offsetX = -60  -- move image left
+            local offsetX = -115 -- move image left (adjusted for centering)
             local offsetY = 10  -- move image down
             local drawX = happinessBar.x - imgWidth * scale - offsetX
             local drawY = happinessBar.y - imgHeight * scale + offsetY
@@ -325,7 +326,7 @@ function love.draw()
         end
     end
     
-    love.graphics.print(math.floor(currentHappiness) .. "%", bar.x - 10, bar.y + bar.height + 10)
+    love.graphics.print(math.floor(currentHappiness) .. "%", bar.x - 5, bar.y + bar.height + 10)
     
     -- Draw score
     love.graphics.setColor(1, 1, 1)
