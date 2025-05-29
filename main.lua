@@ -1,3 +1,15 @@
+local robotFaces = {}
+local currentFace = "happy"
+local previousFace = "happy"
+local showHurt = false
+local hurtTimer = 0
+local lastHappiness = 100
+
+local waitToSpawnTimer = 0
+local waitingToSpawn = false
+
+
+
 local Platform = require("platform")
 local Part = require("part")
 local Bin = require("bin")
@@ -9,6 +21,15 @@ function love.load()
     score = 0
     partLanded = false
     currentPlatformIndex = 1
+
+    --load robot faces assets
+    robotFaces = {
+        happy = love.graphics.newImage("assets/robotsmile.png"),
+        neutral = love.graphics.newImage("assets/robotneutral.png"),
+        sad = love.graphics.newImage("assets/robotsad.png"),
+        hurt = love.graphics.newImage("assets/robothurt.png")
+    }
+    
     
     -- Happiness bar settings
     maxHappiness = 100
@@ -19,7 +40,7 @@ function love.load()
     -- Happiness bar visual settings
     happinessBar = {
         x = 920,          -- X position (right side of screen)
-        y = 50,           -- Y position from top
+        y = 180,           -- Y position from top
         width = 30,       -- Width of the bar
         height = 400,     -- Height of the bar
         borderWidth = 2   -- Border thickness
@@ -29,10 +50,6 @@ function love.load()
     partTypes = Bin.types
     bins = Bin.bins
 
-    airVents = {
-        {x = 250, y = 560, width = 30, height = 20, power = -800},
-        {x = 660, y = 680, width = 30, height = 20, power = -800}
-    }
 
     part, currentPlatformIndex = Part.spawnNew(partTypes, platforms)
     groundY = 850
@@ -84,26 +101,60 @@ function love.update(dt)
         part.y = part.y + part.vy * dt
     end
 
-    if currentPlatformIndex then
-        local platform = platforms[currentPlatformIndex]
-        -- Tilt platform if allowed
-        if platform.canTilt then
-            if love.keyboard.isDown("a") then
-                platform.angle = math.max(platform.angle - dt * 2, -0.4)
-            elseif love.keyboard.isDown("d") then
-                platform.angle = math.min(platform.angle + dt * 2, 0.4)
-            else
-                platform.angle = platform.angle * 0.9
-            end
-
-            if part.onPlatform then
-                part.vx = math.sin(platform.angle) * 200
-                part.x = part.x + part.vx * dt
-            else
-                part.vx = 0
-            end
+    -- Global platform tilt logic
+    local tiltSpeed = dt * 2
+    if love.keyboard.isDown("a") then
+        for _, p in ipairs(platforms) do
+            p.angle = math.max(p.angle - tiltSpeed, -0.4)
+        end
+    elseif love.keyboard.isDown("d") then
+        for _, p in ipairs(platforms) do
+            p.angle = math.min(p.angle + tiltSpeed, 0.4)
+        end
+    else
+        for _, p in ipairs(platforms) do
+            p.angle = p.angle * 0.9
         end
     end
+
+    if part.onPlatform then
+        part.vx = math.sin(platforms[1].angle) * 200
+        part.x = part.x + part.vx * dt
+    else
+        part.vx = 0
+    end
+
+    -- Manage robot face based on happiness or damage
+    if showHurt then
+        hurtTimer = hurtTimer - dt
+        if hurtTimer <= 0 then
+            showHurt = false
+            currentFace = previousFace
+        end
+    end
+
+    -- Update current expression
+    if not showHurt then
+        if currentHappiness < 40 then
+            currentFace = "sad"
+        elseif currentHappiness < 65 then
+            currentFace = "neutral"
+        else
+            currentFace = "happy"
+        end
+    end
+
+    -- Detect if health has dropped by 5% or more
+    if not showHurt and currentHappiness < lastHappiness - 4.9 then
+        showHurt = true
+        hurtTimer = 1.0
+        previousFace = currentFace
+        currentFace = "hurt"
+    end
+
+    -- Save current happiness for next frame comparison
+    lastHappiness = currentHappiness
+
 
     if not partLanded and part.y + part.size / 2 >= groundY then
         partLanded = true
@@ -117,6 +168,10 @@ function love.update(dt)
                     currentHappiness = math.max(0, currentHappiness - happinessDecreasePerScore)
                 else
                     print("Log: Wrong bin")
+                    showHurt = true
+                    hurtTimer = 1.0
+                    previousFace = currentFace
+                    currentFace = "hurt"
                     -- Decrease score and increase happiness when player makes mistake
                     score = math.max(0, score - 1) -- Prevent negative scores
                     currentHappiness = math.min(maxHappiness, currentHappiness + happinessIncreasePerMistake)
@@ -127,22 +182,21 @@ function love.update(dt)
 
         part.vy = 0
 
-        -- Spawn new part after delay
-        love.timer.sleep(0.5)
-        spawnNewPart()
-        partLanded = false
+        -- Trigger delay before spawning new part
+        waitingToSpawn = true
+        waitToSpawnTimer = 0.5
     end
 
-    for _, vent in ipairs(airVents) do
-        local touchingVent =
-            part.y + part.size / 2 >= vent.y - vent.height / 2 and part.y -
-                part.size / 2 <= vent.y + vent.height / 2 and part.x + part.size /
-                2 >= vent.x - vent.width / 2 and part.x - part.size / 2 <=
-                vent.x + vent.width / 2
-
-        if touchingVent then part.vy = vent.power end
+    if waitingToSpawn then
+        waitToSpawnTimer = waitToSpawnTimer - dt
+        if waitToSpawnTimer <= 0 then
+            spawnNewPart()
+            partLanded = false
+            waitingToSpawn = false
+        end
     end
-end
+
+
 
 function love.draw()
     -- Draw platform
@@ -189,24 +243,50 @@ function love.draw()
     love.graphics.setColor(happinessColor)
     love.graphics.rectangle("fill", bar.x, fillY, bar.width, fillHeight)
     
-    -- Draw happiness text
     love.graphics.setColor(1, 1, 1)
-    love.graphics.print("Happiness", bar.x - 20, bar.y - 30)
+
+    if robotFaces[currentFace] then
+        love.graphics.setColor(1, 1, 1)
+        local faceImage = robotFaces[currentFace]
+        if faceImage then
+            local scale = 0.2
+            local imgWidth = faceImage:getWidth()
+            local imgHeight = faceImage:getHeight()
+        
+            local offsetX = -60  -- move image left
+            local offsetY = 10  -- move image down
+            local drawX = happinessBar.x - imgWidth * scale - offsetX
+            local drawY = happinessBar.y - imgHeight * scale + offsetY
+        
+            love.graphics.setColor(1, 1, 1)
+            love.graphics.draw(faceImage, drawX, drawY, 0, scale, scale)
+        end
+        
+    end
+    
     love.graphics.print(math.floor(currentHappiness) .. "%", bar.x - 10, bar.y + bar.height + 10)
 
-    -- Draw air vents
-    for _, vent in ipairs(airVents) do
-        love.graphics.setColor(0.5, 0.8, 1) -- light blue
-        love.graphics.rectangle("fill", vent.x - vent.width / 2,
-                                vent.y - vent.height / 2, vent.width,
-                                vent.height)
     end
     
     -- Draw score (moved this to the end to ensure it's visible)
     love.graphics.setColor(1, 1, 1)
     love.graphics.print("Score: " .. score, 10, 10)
+
+
+    
 end
 
 function spawnNewPart()
     part, currentPlatformIndex = Part.spawnNew(partTypes, platforms)
+end
+
+
+--for testing
+function love.keypressed(key)
+    if key == "h" then
+        -- Simulate damage
+        showHurt = true
+        hurtTimer = 1.0
+        currentFace = "hurt"
+    end
 end
